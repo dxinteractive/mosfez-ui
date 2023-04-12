@@ -34,24 +34,13 @@ function stringifyEvent(e: Event | undefined): string {
 }
 
 function Main() {
-  const [log, setLog] = useState("");
+  const [log] = useState("");
 
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const div = ref.current;
-    if (!div) return;
-    const touch = new Touch(div, () => {
-      setLog(
-        JSON.stringify(
-          {
-            lastEventType: touch.lastEventType,
-            lastEvent: JSON.parse(stringifyEvent(touch.lastEvent)),
-          },
-          null,
-          2
-        )
-      );
-    });
+    const element = ref.current;
+    if (!element) return;
+    const touch = new Touch(element);
     return () => touch.dispose();
   }, []);
 

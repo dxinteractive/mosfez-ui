@@ -1,69 +1,133 @@
+export type OnUpdate = () => void;
+
 export class Touch {
-  private _element;
-  private _onEvent;
+  private _removeMouseEventListeners: () => void;
 
-  private _handlers = {
-    mousedown: (ev: MouseEvent) => {
-      this.lastEventType = "mousedown";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-    mousemove: (ev: MouseEvent) => {
-      this.lastEvent = ev;
-      this.lastEventType = "mousemove";
-      this._onEvent();
-    },
-    mouseup: (ev: MouseEvent) => {
-      this.lastEventType = "mouseup";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-    touchstart: (ev: MouseEvent) => {
-      this.lastEventType = "touchstart";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-    touchmove: (ev: MouseEvent) => {
-      this.lastEventType = "touchmove";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-    touchend: (ev: MouseEvent) => {
-      this.lastEventType = "touchend";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-    touchcancel: (ev: MouseEvent) => {
-      this.lastEventType = "touchcancel";
-      this.lastEvent = ev;
-      this._onEvent();
-    },
-  };
+  private _mouseDown = false;
+  private _mouseDownX: number | undefined;
+  private _mouseDownY: number | undefined;
 
-  public lastEvent: Event | undefined;
-  public lastEventType = "none";
+  private _viewportWidth = 0;
+  private _viewportHeight = 0;
 
-  constructor(element: HTMLElement, onEvent: () => void) {
-    this._element = element;
-    this._onEvent = onEvent;
-    this.attach();
+  private _updateCallbacks = new Set<OnUpdate>();
+
+  // spatial state
+  public panX = 0;
+  public panY = 0;
+  public scaleX = 1;
+  public scaleY = 1;
+  public rotation = 0;
+
+  // configuration
+  public interact = true;
+  public preventHTMLEventsWhileInteract = true;
+  public allowPanX = true;
+  public allowPanY = true;
+  public allowScaleX = true;
+  public allowScaleY = true;
+  public allowRotation = true;
+  public panXAnchorOnViewportResize = 0.5;
+  public panYAnchorOnViewportResize = 0.5;
+  public scaleXOnViewportResize = false;
+  public scaleYOnViewportResize = false;
+  public usePhysics = false;
+
+  constructor(element: HTMLElement) {
+    this._removeMouseEventListeners = this._addMouseEventListeners(element);
+    this._setInitialViewportSize(element);
+    this._addResizeObserver(element);
   }
 
-  private attach() {
-    Object.entries(this._handlers).forEach(([name, handler]) => {
-      this._element.addEventListener(
-        name as keyof HTMLElementEventMap,
-        handler as any
-      );
-    });
+  private _setViewportSize(width: number, height: number) {
+    this._viewportWidth = width;
+    this._viewportHeight = height;
   }
 
-  dispose() {
-    Object.entries(this._handlers).forEach(([name, handler]) => {
-      this._element.removeEventListener(
-        name as keyof HTMLElementEventMap,
-        handler as any
-      );
+  private _setInitialViewportSize(element: HTMLElement) {
+    const rect = element.getBoundingClientRect();
+    this._setViewportSize(rect.width, rect.height);
+  }
+
+  private _addResizeObserver(element: HTMLElement) {
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.target === element) {
+          const { width, height } = entry.contentRect;
+          this._setViewportSize(width, height);
+        }
+      }
     });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }
+
+  private _preventDefault(e: MouseEvent) {
+    if (this.preventHTMLEventsWhileInteract) {
+      e.preventDefault();
+    }
+  }
+
+  private _addMouseEventListeners(element: HTMLElement) {
+    const mousedown = (e: MouseEvent) => {
+      this._preventDefault(e);
+      this._mouseDown = true;
+      const x = e.clientX;
+      const y = e.clientY;
+      this._mouseDownX = x;
+      this._mouseDownY = y;
+
+      console.log(x, y);
+
+      // onSurfaceEvent({
+      //   type: "start",
+      //   x,
+      //   y,
+      //   pointerId: "mouse",
+      //   force: 1,
+      // });
+    };
+
+    const mousemove = (e: MouseEvent) => {
+      this._preventDefault(e);
+      if (!this._mouseDown) return;
+
+      // onSurfaceEvent({
+      //   type: "move",
+      //   x,
+      //   y,
+      //   pointerId: "mouse",
+      //   force: 1,
+      // });
+    };
+
+    const mouseup = () => {
+      this._mouseDown = false;
+    };
+
+    element.addEventListener("mousedown", mousedown);
+    element.addEventListener("mousemove", mousemove);
+    window.addEventListener("mouseup", mouseup);
+
+    return () => {
+      element.removeEventListener("mousedown", mousedown);
+      element.removeEventListener("mousemove", mousemove);
+      window.removeEventListener("mouseup", mouseup);
+    };
+  }
+
+  public dispose() {
+    this._removeMouseEventListeners();
+  }
+
+  public onUpdate(callback: OnUpdate) {
+    this._updateCallbacks.add(callback);
+    return () => {
+      this._updateCallbacks.delete(callback);
+    };
+  }
+
+  public screenToWorld(x: number, y: number): [number, number] {
+    return [x, y];
   }
 }
