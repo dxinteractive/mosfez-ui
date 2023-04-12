@@ -1,7 +1,7 @@
 {
   "name": "mosfez-touch",
   "version": "0.0.0",
-  "description": "A small lib to handle pointer and touch events on a virtual surface.",
+  "description": "A small library to handle pointer and touch events on a virtual surface.",
   "main": "./touch.js",
   "keywords": [
     "touch",

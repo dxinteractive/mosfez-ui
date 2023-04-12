@@ -4,6 +4,10 @@
 
 User interface components and utilities to do things I want to do with.
 
+### [mosfez-touch](https://github.com/dxinteractive/mosfez-ui/tree/main/packages/touch)
+
+A small library to handle pointer and touch events on a virtual surface.
+
 ## Development
 
 You will need `node@16` or greater and `yarn@1` installed globally. Clone the repo and run `yarn prep` to install deps and build. Then you can run:
