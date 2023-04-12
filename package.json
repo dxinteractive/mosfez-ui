@@ -1,0 +1,38 @@
+{
+  "name": "mosfez-ui-monorepo",
+  "version": "0.0.0",
+  "description": "User interface components and utilities to do things I want to do with",
+  "keywords": [],
+  "repository": "https://github.com/dxinteractive/mosfez-ui",
+  "author": "Damien Clarke <dxinteractive@gmail.com>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "private": true,
+  "scripts": {
+    "prep": "yarn && yarn lerna bootstrap",
+    "lint": "yarn eslint ./packages",
+    "test": "yarn lerna run test",
+    "pretty": "yarn prettier --write .",
+    "dev": "yarn lerna run dev",
+    "build": "yarn lerna run build",
+    "clean": "yarn lerna run clean",
+    "preview": "yarn lerna run preview",
+    "build-gh-pages": "yarn lerna run build-gh-pages",
+    "ci": "yarn clean && yarn lint && yarn build && yarn test"
+  },
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.44.0",
+    "@typescript-eslint/parser": "^5.44.0",
+    "eslint": "^8.28.0",
+    "eslint-config-prettier": "^8.5.0",
+    "lerna": "^6.0.3",
+    "prettier": "^2.8.0"
+  }
+}
