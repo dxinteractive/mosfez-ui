@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import ReactDOM from "react-dom/client";
 
 import "./css/base.css";
@@ -13,15 +13,46 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   </React.StrictMode>
 );
 
+function stringifyEvent(e: Event | undefined): string {
+  if (!e) return "null";
+
+  const obj = {};
+  for (const k in e) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    obj[k] = e[k];
+  }
+  return JSON.stringify(
+    obj,
+    (k, v) => {
+      if (v instanceof Node) return "Node";
+      if (v instanceof Window) return "Window";
+      return v;
+    },
+    " "
+  );
+}
+
 function Main() {
+  const [log, setLog] = useState("");
+
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const div = ref.current;
     if (!div) return;
-    const touch = new Touch(ref);
-    return () => {
-      touch.dispose();
-    };
+    const touch = new Touch(div, () => {
+      setLog(
+        JSON.stringify(
+          {
+            lastEventType: touch.lastEventType,
+            lastEvent: JSON.parse(stringifyEvent(touch.lastEvent)),
+          },
+          null,
+          2
+        )
+      );
+    });
+    return () => touch.dispose();
   }, []);
 
   return (
@@ -35,7 +66,9 @@ function Main() {
           github repo
         </a>
       </ListHeader>
-      <div className={classes.content} ref={ref}></div>
+      <div className={classes.content} ref={ref}>
+        {log}
+      </div>
     </div>
   );
 }
