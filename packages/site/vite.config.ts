@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig({
   resolve: {
     alias: {
-      "mosfez-ui": path.resolve(__dirname, "../touch/src"),
+      "mosfez-touch": path.resolve(__dirname, "../touch/src"),
     },
   },
   plugins: [react()],
