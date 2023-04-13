@@ -9,11 +9,15 @@
 .content {
   flex-grow: 1;
   background-color: black;
-  padding: .5rem;
   white-space: pre;
   overflow: hidden;
   font-size: 10px;
   user-select: none;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
 }
 
 .list {

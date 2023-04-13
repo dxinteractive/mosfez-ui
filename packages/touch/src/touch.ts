@@ -1,26 +1,36 @@
-import { vec2 } from "gl-matrix";
+export type XY = [number, number];
 
-function getPointerEventPos(e: PointerEvent): vec2 {
-  return vec2.fromValues(e.clientX, e.clientY);
+function getPointerEventPos(e: PointerEvent): XY {
+  return [e.clientX, e.clientY];
 }
 
-export type OnUpdate = () => void;
+export type UpdateProps = {
+  panX: number;
+  panY: number;
+  scaleX: number;
+  scaleY: number;
+  rotation: number;
+  viewportWidth: number;
+  viewportHeight: number;
+};
+
+export type OnUpdate = (props: UpdateProps) => void;
 
 export class Touch {
   private _removePointerEventListeners: () => void;
   private _activePointers = new Map<number, PointerEvent>();
-  private _currentDragStart: vec2[] = [];
+  private _currentDragStart: XY[] = [];
   private _updateCallbacks = new Set<OnUpdate>();
 
   private _viewportWidth = -1;
   private _viewportHeight = -1;
 
   // spatial state
-  // public panX = 0;
-  // public panY = 0;
-  // public scaleX = 1;
-  // public scaleY = 1;
-  // public rotation = 0;
+  public panX = 0;
+  public panY = 0;
+  public scaleX = 1;
+  public scaleY = 1;
+  public rotation = 0;
 
   // // configuration
   // public interact = true;
@@ -42,15 +52,31 @@ export class Touch {
     this._addResizeObserver(element);
   }
 
+  private _callUpdate() {
+    const props: UpdateProps = {
+      panX: this.panX,
+      panY: this.panY,
+      scaleX: this.scaleX,
+      scaleY: this.scaleY,
+      rotation: this.rotation,
+      viewportWidth: this._viewportWidth,
+      viewportHeight: this._viewportHeight,
+    };
+
+    this._updateCallbacks.forEach((fn) => fn(props));
+  }
+
   private _setViewportSize(width: number, height: number) {
     const prevWidth = this._viewportWidth;
     const prevHeight = this._viewportHeight;
     this._viewportWidth = width;
     this._viewportHeight = height;
 
-    if ((prevWidth === width && prevHeight === height) || prevWidth === -1) {
+    if (prevWidth === width && prevHeight === height) {
       return;
     }
+
+    this._callUpdate();
 
     // todo - reposition pan and scale according to viewport size change
   }
@@ -127,7 +153,7 @@ export class Touch {
     // } else if(pointerCount > 1) {
     // }
     console.log("_currentDragStart", this._currentDragStart);
-    // this._updateCallbacks.forEach((fn) => fn());
+    // this._callUpdate();
   }
 
   public dispose() {
@@ -141,7 +167,7 @@ export class Touch {
     };
   }
 
-  public screenToWorld(x: number, y: number): [number, number] {
+  public screenToWorld(x: number, y: number): XY {
     return [x, y];
   }
 }
