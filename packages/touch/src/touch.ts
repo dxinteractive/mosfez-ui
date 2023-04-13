@@ -10,11 +10,10 @@ export class Touch {
   private _removePointerEventListeners: () => void;
   private _activePointers = new Map<number, PointerEvent>();
   private _currentDragStart: vec2[] = [];
+  private _updateCallbacks = new Set<OnUpdate>();
 
   private _viewportWidth = -1;
   private _viewportHeight = -1;
-
-  private _updateCallbacks = new Set<OnUpdate>();
 
   // spatial state
   // public panX = 0;
@@ -86,7 +85,7 @@ export class Touch {
       this._preventDefault(e);
       if (this._activePointers.has(e.pointerId)) {
         this._activePointers.set(e.pointerId, e);
-        console.log("this._currentDragStart", this._currentDragStart);
+        this._updateCameraFromDrag();
       }
     };
 
@@ -116,6 +115,19 @@ export class Touch {
   private _startStopDrag() {
     const events = Array.from(this._activePointers.values());
     this._currentDragStart = events.map((e) => getPointerEventPos(e));
+  }
+
+  private _updateCameraFromDrag() {
+    const pointerCount = this._currentDragStart.length;
+    if (pointerCount === 0) return;
+
+    // todo - transform start and end points through screenToWorld matrix from start of drag
+
+    // if(pointerCount === 1) {
+    // } else if(pointerCount > 1) {
+    // }
+    console.log("_currentDragStart", this._currentDragStart);
+    // this._updateCallbacks.forEach((fn) => fn());
   }
 
   public dispose() {

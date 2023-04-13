@@ -47,7 +47,7 @@ function Main() {
   return (
     <div className={classes.main}>
       <ListHeader>
-        mosfez-ui test site -{" "}
+        mosfez-ui dev site -{" "}
         <a
           className={classes.link}
           href="https://github.com/dxinteractive/mosfez-ui"
