@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import ReactDOM from "react-dom/client";
 
 import "./css/base.css";
 import "./main.css";
 import classes from "./main.module.css";
-import { Touch, UpdateProps } from "mosfez-touch/touch";
+import { Touch } from "mosfez-touch/touch";
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -14,7 +14,6 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 );
 
 function Main() {
-  const [, setTouchProps] = useState<UpdateProps | null>(null);
   const divRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -25,13 +24,18 @@ function Main() {
     if (!element || !canvas || !context) return;
 
     const touch = new Touch(element);
-    touch.onUpdate((props) => {
-      setTouchProps(props);
-      canvas.width = props.viewportWidth;
-      canvas.height = props.viewportHeight;
-      context.clearRect(0, 0, props.viewportWidth, props.viewportHeight);
+    touch.onUpdate(() => {
+      const vw = touch.viewportWidth;
+      const vh = touch.viewportHeight;
+
+      canvas.width = vw;
+      canvas.height = vh;
+      context.clearRect(0, 0, vw, vh);
       context.fillStyle = "#FFF";
-      context.fillRect(0, 0, 4, 4);
+      context.fillRect(...touch.worldToView(0, 0), 4, 4);
+      context.fillRect(...touch.worldToView(10, 0), 4, 4);
+      context.fillRect(...touch.worldToView(20, 0), 4, 4);
+      context.fillRect(...touch.worldToView(0, 10), 4, 4);
     });
     return () => touch.dispose();
   }, []);

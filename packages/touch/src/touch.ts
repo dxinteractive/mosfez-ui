@@ -4,33 +4,38 @@ function getPointerEventPos(e: PointerEvent): XY {
   return [e.clientX, e.clientY];
 }
 
-export type UpdateProps = {
-  panX: number;
-  panY: number;
+export type OnUpdate = () => void;
+
+export type Camera = {
+  x: number;
+  y: number;
   scaleX: number;
   scaleY: number;
   rotation: number;
-  viewportWidth: number;
-  viewportHeight: number;
 };
 
-export type OnUpdate = (props: UpdateProps) => void;
+function createCamera(): Camera {
+  return {
+    x: 0,
+    y: 0,
+    scaleX: 1,
+    scaleY: 1,
+    rotation: 0,
+  };
+}
 
 export class Touch {
   private _removePointerEventListeners: () => void;
   private _activePointers = new Map<number, PointerEvent>();
-  private _currentDragStart: XY[] = [];
+  private _cameraAtDragStart = createCamera();
+  private _pointersAtDragStart: XY[] = [];
   private _updateCallbacks = new Set<OnUpdate>();
 
-  private _viewportWidth = -1;
-  private _viewportHeight = -1;
-
   // spatial state
-  public panX = 0;
-  public panY = 0;
-  public scaleX = 1;
-  public scaleY = 1;
-  public rotation = 0;
+  public camera: Camera;
+
+  public viewportWidth = -1;
+  public viewportHeight = -1;
 
   // // configuration
   // public interact = true;
@@ -40,37 +45,29 @@ export class Touch {
   // public allowScaleX = true;
   // public allowScaleY = true;
   // public allowRotation = true;
-  // public panXAnchorOnViewportResize = 0.5;
-  // public panYAnchorOnViewportResize = 0.5;
+  // public xAnchorOnViewportResize = 0.5;
+  // public yAnchorOnViewportResize = 0.5;
   // public scaleXOnViewportResize = false;
   // public scaleYOnViewportResize = false;
   // public usePhysics = false;
 
   constructor(element: HTMLElement) {
+    this.camera = createCamera();
+
     element.style.touchAction = "none";
     this._removePointerEventListeners = this._addPointerEventListeners(element);
     this._addResizeObserver(element);
   }
 
   private _callUpdate() {
-    const props: UpdateProps = {
-      panX: this.panX,
-      panY: this.panY,
-      scaleX: this.scaleX,
-      scaleY: this.scaleY,
-      rotation: this.rotation,
-      viewportWidth: this._viewportWidth,
-      viewportHeight: this._viewportHeight,
-    };
-
-    this._updateCallbacks.forEach((fn) => fn(props));
+    this._updateCallbacks.forEach((fn) => fn());
   }
 
   private _setViewportSize(width: number, height: number) {
-    const prevWidth = this._viewportWidth;
-    const prevHeight = this._viewportHeight;
-    this._viewportWidth = width;
-    this._viewportHeight = height;
+    const prevWidth = this.viewportWidth;
+    const prevHeight = this.viewportHeight;
+    this.viewportWidth = width;
+    this.viewportHeight = height;
 
     if (prevWidth === width && prevHeight === height) {
       return;
@@ -138,21 +135,37 @@ export class Touch {
     };
   }
 
+  private _getActivePointersArray() {
+    return Array.from(this._activePointers.values());
+  }
+
   private _startStopDrag() {
-    const events = Array.from(this._activePointers.values());
-    this._currentDragStart = events.map((e) => getPointerEventPos(e));
+    const pointers = this._getActivePointersArray();
+    this._cameraAtDragStart = { ...this.camera };
+    this._pointersAtDragStart = pointers.map((e) => getPointerEventPos(e));
   }
 
   private _updateCameraFromDrag() {
-    const pointerCount = this._currentDragStart.length;
-    if (pointerCount === 0) return;
+    const pointerCount = this._pointersAtDragStart.length;
+    if (!this._cameraAtDragStart || pointerCount === 0) return;
 
-    // todo - transform start and end points through screenToWorld matrix from start of drag
+    const pointers = this._getActivePointersArray();
+    const diff = this._pointersAtDragStart.map((oldPos, i) => {
+      const newPos = getPointerEventPos(pointers[i]);
+      return [newPos[0] - oldPos[0], newPos[1] - oldPos[1]];
+    });
+
+    this.camera.x = this._cameraAtDragStart.x - diff[0][0];
+    this.camera.y = this._cameraAtDragStart.y - diff[0][1];
+
+    console.log("this.camera", this.camera);
+    this._callUpdate();
+
+    // todo - transform start and end points through viewToWorld matrix from start of drag
 
     // if(pointerCount === 1) {
     // } else if(pointerCount > 1) {
     // }
-    console.log("_currentDragStart", this._currentDragStart);
     // this._callUpdate();
   }
 
@@ -167,7 +180,15 @@ export class Touch {
     };
   }
 
-  public screenToWorld(x: number, y: number): XY {
+  public worldToView(x: number, y: number): XY {
+    x -= this.camera.x;
+    y -= this.camera.y;
+    return [x, y];
+  }
+
+  public viewToWorld(x: number, y: number): XY {
+    x += this.camera.x;
+    y += this.camera.y;
     return [x, y];
   }
 }
