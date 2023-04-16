@@ -24,6 +24,7 @@ function Main() {
     if (!element || !canvas || !context) return;
 
     const touch = new Touch(element);
+    touch.allowScaleY = false;
     touch.onUpdate(() => {
       const vw = touch.viewportWidth;
       const vh = touch.viewportHeight;
